@@ -26,12 +26,6 @@ ALWAYS use `/skill-creator` — it handles requirements, writing, registration, 
 - Python scripts: always use `uv run <script>`, never `python` or `python3`
 - Keep SKILL.md under 500 lines; move reference material to `references/`
 
-## Commit Attribution
-AI commits MUST include:
-```
-Co-Authored-By: (the agent's name and attribution byline)
-```
-
 ## References
 - Skill template and optional fields: `README.md`
 - Testing and PR workflow: `CONTRIBUTING.md`
