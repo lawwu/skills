@@ -34,7 +34,7 @@ npx skills add lawwu/skills
 
 | Skill | Description |
 |-------|-------------|
-| [create-skills-marketplace](plugins/lawwu-skills/skills/create-skills-marketplace/SKILL.md) | Scaffold a new Claude Code skills marketplace from the cookiecutter template. |
+| [create-skills-marketplace](plugins/lawwu-skills/skills/create-skills-marketplace/SKILL.md) | Scaffold a new Claude Code skills marketplace from the [cookiecutter template](https://github.com/lawwu/skills-marketplace). |
 | [skill-creator](plugins/lawwu-skills/skills/code-simplifier/SKILL.md) | Create new skills, modify and improve existing skills, and measure skill performance |
 
 ## Available Subagents
