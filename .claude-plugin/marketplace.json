@@ -1,0 +1,20 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "lawwu-skills",
+  "description": "Agent skills for Claude Code",
+  "owner": {
+    "name": "Lawrence Wu",
+    "email": "lawrencewu@hey.com"
+  },
+  "plugins": [
+    {
+      "name": "lawwu-skills",
+      "description": "Agent skills for code simplification and more",
+      "author": {
+        "name": "Lawrence Wu"
+      },
+      "source": "./plugins/lawwu-skills",
+      "category": "productivity"
+    }
+  ]
+}
