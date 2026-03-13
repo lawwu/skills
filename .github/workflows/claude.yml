@@ -30,7 +30,19 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Check actor is in CODEOWNERS
+        id: auth-check
+        run: |
+          ALLOWED=$(grep -oP '(?<=@)\S+' .github/CODEOWNERS | sort -u)
+          if echo "$ALLOWED" | grep -qx "${{ github.actor }}"; then
+            echo "allowed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "allowed=false" >> "$GITHUB_OUTPUT"
+            echo "Actor '${{ github.actor }}' is not in CODEOWNERS — skipping."
+          fi
+
       - name: Run Claude Code
+        if: steps.auth-check.outputs.allowed == 'true'
         id: claude
         uses: anthropics/claude-code-action@v1
         with:
