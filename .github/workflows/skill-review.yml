@@ -46,7 +46,7 @@ jobs:
             https://raw.githubusercontent.com/anthropics/skills/refs/heads/main/skills/skill-creator/SKILL.md
 
             Review each of the following changed skill directories. For each directory, read the SKILL.md file and any other relevant files to understand the skill's purpose, design, and implementation.
-            
+
             Changed skill directories:
             ${{ steps.changed-skills.outputs.dirs }}
 
