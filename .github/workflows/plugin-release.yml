@@ -1,0 +1,33 @@
+name: Plugin Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'plugins/**/.claude-plugin/plugin.json'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Create plugin releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          CHANGED=$(git diff --name-only HEAD~1 HEAD -- 'plugins/**/.claude-plugin/plugin.json' | grep 'plugin.json' || true)
+          if [ -z "$CHANGED" ]; then
+            echo "No plugin.json files changed, skipping."
+            exit 0
+          fi
+          echo "$CHANGED" | xargs python .github/scripts/create-plugin-release.py
