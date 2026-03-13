@@ -1,0 +1,58 @@
+name: Skill Review
+
+on:
+  pull_request:
+    paths:
+      - "plugins/**/skills/**"
+
+jobs:
+  skill-review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Detect changed skill directories
+        id: changed-skills
+        run: |
+          git fetch origin ${{ github.base_ref }} --depth=1
+          DIRS=$(git diff --name-only origin/${{ github.base_ref }}...HEAD \
+            | grep -E '^plugins/.*/skills/[^/]+/' \
+            | sed 's|^\(plugins/.*/skills/[^/]*/\).*|\1|' \
+            | sort -u \
+            | sed 's|/$||')
+          echo "dirs<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$DIRS" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Run Claude Code
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          track_progress: true
+          prompt: |
+            Review the skills that were added or modified in this pull request.
+
+            Fetch this skill-creator guide as your reference:
+            https://raw.githubusercontent.com/anthropics/skills/refs/heads/main/skills/skill-creator/SKILL.md
+
+            Review each of the following changed skill directories. For each directory, read the SKILL.md file and any other relevant files to understand the skill's purpose, design, and implementation.
+            
+            Changed skill directories:
+            ${{ steps.changed-skills.outputs.dirs }}
+
+            For each skill, evaluate against these criteria and post a single PR review comment:
+
+            1. **Frontmatter**: Does the SKILL.md have correct and complete frontmatter? Are all required fields present and properly formatted?
+            2. **Progressive Disclosure**: Does the skill follow progressive disclosure principles? Is it designed to reveal information and functionality gradually to users?
+            3. **Clarity and Usability**: Is the skill's purpose clear? Does it uses imperative form?
+            4. **References** - Are reference files properly linked from SKILL.md with guidance on when to read them? No duplication between body and references?
