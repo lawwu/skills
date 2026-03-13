@@ -20,6 +20,18 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Check PR author is in CODEOWNERS
+        id: auth-check
+        run: |
+          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
+          ALLOWED=$(grep -oP '(?<=@)\S+' .github/CODEOWNERS | sort -u)
+          if echo "$ALLOWED" | grep -qx "$PR_AUTHOR"; then
+            echo "allowed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "allowed=false" >> "$GITHUB_OUTPUT"
+            echo "PR author '$PR_AUTHOR' is not in CODEOWNERS — skipping skill review."
+          fi
+
       - name: Detect changed skill directories
         id: changed-skills
         run: |
@@ -35,6 +47,7 @@ jobs:
 
       - name: Run Claude Code
         id: claude
+        if: steps.auth-check.outputs.allowed == 'true'
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
