@@ -34,7 +34,7 @@ npx skills add lawwu/skills
 
 | Skill | Description |
 |-------|-------------|
-| [review-code](plugins/lawwu-skills/skills/review-code/SKILL.md) | Review code using an external AI model (Codex by default, Claude Code as fallback). Asks for scope before starting. |
+| [create-skills-marketplace](plugins/lawwu-skills/skills/create-skills-marketplace/SKILL.md) | Scaffold a new Claude Code skills marketplace from the cookiecutter template. |
 | [skill-creator](plugins/lawwu-skills/skills/code-simplifier/SKILL.md) | Create new skills, modify and improve existing skills, and measure skill performance |
 
 ## Available Subagents
