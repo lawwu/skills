@@ -49,7 +49,7 @@ jobs:
           npm install -g @anthropic-ai/claude-code@2.1.18
           # Verify the path and version
           CLAUDE_BIN=$(which claude)
-          echo "CLAUDE_PATH=$CLAUDE_BIN" >> $GITHUB_ENV
+          echo "CLAUDE_PATH=$CLAUDE_BIN" >> "$GITHUB_ENV"
           echo "Claude binary location: $CLAUDE_BIN"
           echo "Installed Claude Code version:"
           claude --version
