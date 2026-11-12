@@ -5,6 +5,9 @@ on:
     paths:
       - "plugins/**/skills/**"
 
+permissions:
+  contents: read
+
 jobs:
   skill-review:
     runs-on: ubuntu-latest
@@ -16,14 +19,16 @@ jobs:
       actions: read
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.1.0
         with:
           fetch-depth: 1
+          persist-credentials: false
 
       - name: Check PR author is in CODEOWNERS
         id: auth-check
+        env:
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
-          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
           ALLOWED=$(grep -oP '(?<=@)\S+' .github/CODEOWNERS | sort -u)
           if echo "$ALLOWED" | grep -qx "$PR_AUTHOR"; then
             echo "allowed=true" >> "$GITHUB_OUTPUT"
@@ -34,9 +39,11 @@ jobs:
 
       - name: Detect changed skill directories
         id: changed-skills
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
-          git fetch origin ${{ github.base_ref }} --depth=1
-          DIRS=$(git diff --name-only origin/${{ github.base_ref }}...HEAD \
+          git fetch origin "$BASE_REF" --depth=1
+          DIRS=$(git diff --name-only "origin/$BASE_REF...HEAD" \
             | grep -E '^plugins/.*/skills/[^/]+/' \
             | sed 's|^\(plugins/.*/skills/[^/]*/\).*|\1|' \
             | sort -u \
@@ -48,10 +55,10 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Install Claude Code v2.1.18
-        run: |
+        run: | # zizmor: ignore[adhoc-packages] exact version pinned below
           # Remove any existing claude installation
           sudo rm -f /usr/local/bin/claude
-          # Install specific version via npm
+          # Install specific version via npm (exact version, so no lockfile is needed)
           npm install -g @anthropic-ai/claude-code@2.1.18
           # Verify the path and version
           CLAUDE_BIN=$(which claude)
@@ -63,7 +70,7 @@ jobs:
       - name: Run Claude Code
         id: claude
         if: steps.auth-check.outputs.allowed == 'true'
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@v1.0.267
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           path_to_claude_code_executable: ${{ env.CLAUDE_PATH }}
