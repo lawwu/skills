@@ -35,6 +35,7 @@ npx skills add lawwu/skills
 | Skill | Description |
 |-------|-------------|
 | [create-skills-marketplace](plugins/lawwu-skills/skills/create-skills-marketplace/SKILL.md) | Scaffold a new Claude Code skills marketplace from the [cookiecutter template](https://github.com/lawwu/skills-marketplace). |
+| [lock-github-actions](plugins/lawwu-skills/skills/lock-github-actions/SKILL.md) | Lock a repo's GitHub Actions to exact commits with [gh-actions-lock](https://github.com/github/gh-actions-lock), lint the workflows with [zizmor](https://docs.zizmor.sh) and fix its findings, check both in CI, and make the checks required. |
 | [skill-creator](plugins/lawwu-skills/skills/code-simplifier/SKILL.md) | Create new skills, modify and improve existing skills, and measure skill performance |
 
 ## Available Subagents
