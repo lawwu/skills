@@ -50,6 +50,19 @@ All changes go through the PR flow, but formal review is optional.
 - **Request review** only when you want a second pair of eyes
 - Keep PRs focused - one skill or one improvement per PR when practical
 
+## GitHub Actions
+
+The workflows' actions are locked to exact commits in `.github/workflows/actions.lock`, and
+the `actions` workflow checks the lockfile and lints the workflows on every pull request.
+
+- After adding or changing an action in a workflow, relock with `gh actions-lock`
+  (install once with `gh extension install github/gh-actions-lock`).
+- Lint the workflows with `uvx zizmor .github/`.
+- Keep comments, including `# zizmor: ignore[...]`, off `uses:` lines: relocking rewrites
+  those lines and drops trailing comments.
+- Dependabot proposes action updates weekly, after a 7-day cooldown, and updates the lockfile
+  in the same pull request.
+
 ## Adding a New Skill
 
 1. Create `plugins/lawwu-skills/skills/<skill-name>/SKILL.md`

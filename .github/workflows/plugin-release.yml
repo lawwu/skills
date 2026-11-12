@@ -7,17 +7,21 @@ on:
     paths:
       - 'plugins/**/.claude-plugin/plugin.json'
 
+permissions:
+  contents: read
+
 jobs:
   release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.1.0
         with:
           fetch-depth: 0
+          persist-credentials: true # zizmor: ignore[artipacked] create-plugin-release.py pushes the new tag with them
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5.6.0
         with:
           python-version: '3.12'
 

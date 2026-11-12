@@ -1,0 +1,14 @@
+version: 2
+updates:
+  # Updates both the workflows and .github/workflows/actions.lock in one pull request.
+  # The cooldown keeps a release out until it is a week old, so a hijacked one has time
+  # to be caught and pulled first.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns: ['*']
