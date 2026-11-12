@@ -1,0 +1,27 @@
+# Turns on auto-merge for Dependabot pull requests whose highest update is a minor or
+# patch version. GitHub then merges them only once the checks the main ruleset requires
+# ("Actions lock", "zizmor", "prek") pass. Major version bumps are left for review.
+name: Dependabot auto-merge
+on:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  auto-merge:
+    name: Dependabot auto-merge
+    # The pull request's author, not github.actor: a person re-running a Dependabot job
+    # must not be able to turn this on for a pull request someone else edited.
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'lawwu/skills'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # merge the pull request
+      pull-requests: write # enable auto-merge on it
+    steps:
+      - id: metadata
+        uses: dependabot/fetch-metadata@v3.1.0
+      - name: Enable auto-merge for minor and patch updates
+        if: steps.metadata.outputs.update-type == 'version-update:semver-minor' || steps.metadata.outputs.update-type == 'version-update:semver-patch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: gh pr merge --auto --merge "$PR_URL"
