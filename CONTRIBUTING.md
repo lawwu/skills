@@ -61,7 +61,8 @@ the `actions` workflow checks the lockfile and lints the workflows on every pull
 - Keep comments, including `# zizmor: ignore[...]`, off `uses:` lines: relocking rewrites
   those lines and drops trailing comments.
 - Dependabot proposes action updates weekly, after a 7-day cooldown, and updates the lockfile
-  in the same pull request.
+  in the same pull request. Minor and patch updates merge on their own once the required
+  checks ("Actions lock", "zizmor", "prek") pass; major version bumps wait for review.
 
 ## Adding a New Skill
 
