@@ -16,12 +16,12 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v6.1.0
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: true # zizmor: ignore[artipacked] create-plugin-release.py pushes the new tag with them
 
-      - uses: actions/setup-python@v5.6.0
+      - uses: actions/setup-python@v7.1.0
         with:
           python-version: '3.12'
 
