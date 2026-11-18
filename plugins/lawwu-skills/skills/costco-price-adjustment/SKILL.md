@@ -64,8 +64,8 @@ a list:
  "unit_price_paid": "399.99", "quantity": 1, "status": "delivered"}
 ```
 
-For warehouse lines use `"channel": "warehouse"`, a `receipt_id` instead of `order_number`, and
-`"warehouse": "<name or number>"`.
+For warehouse lines use `"channel": "warehouse"`, a `receipt_id` instead of `order_number`,
+`"warehouse": "<name or number>"`, and `"food": true` on food and drink.
 
 `prices.json`: one entry each time a current price is checked. Append; don't rewrite old
 observations.
@@ -107,8 +107,15 @@ show:
 
 Skip fee lines (recycling fees and the like) and bundled add-ons that were free.
 
-**Warehouse receipts:** on Orders & Purchases, open the Warehouse tab and each "View Receipt"
-and "View Return Receipt" from the last 30 days. The receipt opens in a dialog; read its text
+**Warehouse receipts** get a lighter pass than online orders. An adjustment there costs the
+member a trip to the Returns counter, groceries rarely change by enough to justify one, and
+there is seldom a price to compare against. So only non-food items that cost $50 or more are
+worth checking (the member can pick a different floor; pass it to the script as
+`--warehouse-min`).
+
+On Orders & Purchases, open the Warehouse tab and each "View Receipt" and "View Return Receipt"
+from the last 30 days. A purchase receipt whose total is under the floor can't contain a
+qualifying item, so leave it unopened. The receipt opens in a dialog; read its text
 there (the print frame stays empty until Print is pressed). Lines are tab-separated:
 
 ```text
@@ -118,8 +125,10 @@ E   1234567   KS EXAMPLE     12.59 N     item line: number, short name, price
 E   1068080   EXAMPLE EGGS   17.98 N     so this is 2 at 8.99 each
 ```
 
-Skip deposit and fee lines, gas and food court receipts. Meat and produce sold by weight have
-a different price every time and can't be compared.
+Skip deposit and fee lines, gas and food court receipts. Record the remaining lines, marking
+food and drink with `"food": true`: lines that start with `E` are groceries, and the short name
+settles the rest (a rotisserie chicken has no `E`). The script leaves food and anything under
+the floor out without needing a price, and counts them as `warehouse_not_checked`.
 
 **Returns.** A return receipt's lines carry the item numbers that went back. One marked
 `RTC ECOM PURCHASE` is a Costco.com order returned at the warehouse, which is how an online
@@ -158,8 +167,8 @@ warehouse price is known only when there is something to point at:
   as "My Warehouse" (check it is the one the item was bought at; the page warns prices vary);
 - the current Member-Only Savings book listing that item number as an in-warehouse offer.
 
-Record those with `"channel": "warehouse"`. Most groceries will have nothing to record, and
-that is fine; spend the effort on the larger non-food items.
+Look these up only for non-food warehouse items at or above the floor, and record them with
+`"channel": "warehouse"`. Don't look up prices for the rest.
 
 ### 3. Work out what qualifies
 
@@ -246,7 +255,8 @@ Finish with a short summary:
 - To raise at the warehouse: item, receipt date, warehouse, paid and current price, last day.
 - Could not check, and why.
 - Earlier requests: credited, still waiting, overdue.
-- How many purchases were checked and found unchanged.
+- How many purchases were checked and found unchanged, and how many warehouse lines were left
+  unchecked as groceries or under the floor.
 
 If nothing qualified, say so in one line with the count checked.
 

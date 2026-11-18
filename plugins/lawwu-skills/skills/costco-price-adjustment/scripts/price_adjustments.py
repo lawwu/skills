@@ -23,6 +23,8 @@ from decimal import Decimal
 from pathlib import Path
 
 WINDOW_DAYS = 30
+# Warehouse adjustments mean a trip to the Returns counter, so small ones are not worth chasing.
+WAREHOUSE_MIN_PRICE = "50"
 CREDIT_BUSINESS_DAYS = 10
 INACTIVE_STATUSES = {"cancelled", "canceled", "returned", "refunded"}
 # A denied or withdrawn request does not block asking again at a different price.
@@ -65,9 +67,12 @@ def latest_prices(prices: list[dict]) -> dict[tuple[str, str], dict]:
     return latest
 
 
-def find_candidates(purchases, prices, ledger, today: date, window: int) -> dict:
+def find_candidates(
+    purchases, prices, ledger, today: date, window: int, warehouse_min: Decimal
+) -> dict:
     latest = latest_prices(prices)
     candidates, skipped = [], []
+    warehouse_not_checked = 0
     open_until: list[date] = []  # last day of every purchase still inside its window
 
     for p in purchases:
@@ -94,6 +99,16 @@ def find_candidates(purchases, prices, ledger, today: date, window: int) -> dict
         if today > last_day:
             skip(f"bought more than {window} days ago (window closed {last_day})")
             continue
+
+        if channel == "warehouse":
+            if p.get("food"):
+                warehouse_not_checked += 1
+                skip("warehouse grocery item; not checked")
+                continue
+            if money(p["unit_price_paid"]) < warehouse_min:
+                warehouse_not_checked += 1
+                skip(f"warehouse item under {warehouse_min}; not checked")
+                continue
 
         open_until.append(last_day)
         obs = latest.get((item, channel))
@@ -185,6 +200,7 @@ def find_candidates(purchases, prices, ledger, today: date, window: int) -> dict
         "run_again_by": run_again_by.isoformat() if run_again_by else None,
         "candidates": candidates,
         "expected_credit_before_tax": str(total),
+        "warehouse_not_checked": warehouse_not_checked,
         "skipped": skipped,
     }
 
@@ -192,7 +208,12 @@ def find_candidates(purchases, prices, ledger, today: date, window: int) -> dict
 def cmd_candidates(args) -> None:
     today = day(args.today) if args.today else date.today()
     result = find_candidates(
-        load(args.purchases), load(args.prices), load(args.ledger), today, args.window
+        load(args.purchases),
+        load(args.prices),
+        load(args.ledger),
+        today,
+        args.window,
+        money(args.warehouse_min),
     )
     print(json.dumps(result, indent=2))
 
@@ -239,6 +260,11 @@ def main() -> None:
     c.add_argument("--ledger")
     c.add_argument("--today", help="YYYY-MM-DD (default: today)")
     c.add_argument("--window", type=int, default=WINDOW_DAYS)
+    c.add_argument(
+        "--warehouse-min",
+        default=WAREHOUSE_MIN_PRICE,
+        help="skip warehouse items that cost less than this (default: %(default)s)",
+    )
     c.set_defaults(func=cmd_candidates)
 
     r = sub.add_parser("record", help="add a request to the ledger")
