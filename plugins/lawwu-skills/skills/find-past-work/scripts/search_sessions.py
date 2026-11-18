@@ -199,7 +199,9 @@ def main() -> int:
     ap.add_argument("--any", action="store_true", help="match any term instead of all")
     ap.add_argument("--deep", action="store_true", help="also search the assistant's replies")
     ap.add_argument("--recent", action="store_true", help="list sessions instead of searching")
-    ap.add_argument("--include-automated", action="store_true")
+    ap.add_argument(
+        "--include-automated", action="store_true", help="keep sessions that look like batch jobs"
+    )
     ap.add_argument("--limit", type=int, default=15)
     ap.add_argument("--json", action="store_true", help="machine-readable output")
     args = ap.parse_args()
@@ -234,6 +236,10 @@ def main() -> int:
         counts = collections.Counter(v for v in first.values() if v)
         paths = [p for p in candidates if first[p] and counts[first[p]] <= AUTOMATED_OVER]
     searched = len(paths)
+    hidden = len(candidates) - len(paths)
+    hidden_note = (
+        f" {hidden} hidden as automated; --include-automated shows them." if hidden else ""
+    )
     if patterns and not args.recent:
         paths = [p for p in paths if raw_match(p, patterns, not args.any)]
 
@@ -293,11 +299,11 @@ def main() -> int:
         return 0 if out else 1
 
     if not results:
-        print(f"No sessions matched in {ROOT} ({searched} sessions searched).")
+        print(f"No sessions matched in {ROOT} ({searched} sessions searched).{hidden_note}")
         print("Try fewer or broader terms, --any, --deep, or a longer --days window.")
         return 1
 
-    print(f"{total} matching session(s); showing {len(results)}.\n")
+    print(f"{total} matching session(s); showing {len(results)}.{hidden_note}\n")
     for _, s, shown in results:
         day = local_day(s["first"])
         end = local_day(s["last"])

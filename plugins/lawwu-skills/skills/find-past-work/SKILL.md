@@ -52,8 +52,8 @@ jobs do), which can also hide a human session that began with a stock opener.
 
 Dates are shown in local time, and the script exits with status 1 when nothing matched.
 
-If the session tools of the desktop app are available (a transcript search tool), they are
-a fine second source, but the script reports things they don't: branches and files written.
+The script says how many sessions it hid as automated, so a count there with no results is
+the cue to add `--include-automated`.
 
 ## 2. Confirm what's really there
 
@@ -112,7 +112,8 @@ Then use `search_sessions.py --recent --days N --project <repo> --limit 100` to 
 branches back to what the user was trying to do. Group the result by what needs a decision: local-only
 branches with real commits (at risk), open PRs, worktrees with uncommitted changes, and
 branches that are safe to delete because their PR merged. Don't push, merge or delete
-anything as part of the sweep; report first.
+anything as part of the sweep; report first. (`git fetch --prune` only drops local records
+of branches already deleted on the remote; it changes no work.)
 
 ## Privacy
 
