@@ -21,11 +21,19 @@ current branch), then take a snapshot:
 uv run <skill-dir>/scripts/pr_snapshot.py <pr-url-or-number> --logs
 ```
 
-It returns JSON with the merge state (`CONFLICTING`/`DIRTY`, `BEHIND`, `BLOCKED`, `CLEAN`),
-failed and pending checks (with an `error_excerpt` of the log around the first `##[error]` for
-each failed Actions job), unresolved review threads, whether the author is Dependabot, and
-whether you can push to the head branch, the last few comments, and for Dependabot PRs a
-`dependabot.status` (`idle`, `rebasing`, `closed-superseded`, `closed`).
+It returns JSON with:
+
+- the merge state (`CONFLICTING`/`DIRTY`, `BEHIND`, `BLOCKED`, `CLEAN`)
+- failed and pending checks, each failed Actions job with an `error_excerpt` of the log
+  around its first `##[error]`
+- unresolved review threads and the last few comments
+- whether you can push to the head branch (`can_push_to_head`)
+- for Dependabot PRs, `dependabot.status`: `idle`, `rebasing`, `closed-superseded` or `closed`
+
+If it's a Dependabot or other dependency-update PR, read
+[references/dependency-prs.md](references/dependency-prs.md) now: conflicts and failures on
+those PRs are handled differently, and the bot that owns the branch will undo work done the
+usual way.
 
 The PR changes under you: CI finishes, Dependabot rebases or closes it, reviewers comment.
 So take a fresh snapshot at the start of every round, and check `state` and the latest
@@ -39,8 +47,9 @@ user's request was about the update rather than the number ("get the npm bump gr
 they named this exact PR, ask before writing to the new one. Anything you've already diagnosed
 or fixed locally usually applies to the replacement unchanged, so don't throw it away.
 
-If it's a draft, babysit it anyway but say so in the report. If `can_push_to_head` is false (a fork that doesn't allow maintainer edits), you
-can still diagnose, but report fixes as suggestions instead of pushing them.
+If it's a draft, babysit it anyway but say so in the report. If `can_push_to_head` is false
+(a fork that doesn't allow maintainer edits), diagnose anyway, but report fixes as suggestions
+instead of pushing them.
 
 ## 2. Get a working copy
 
@@ -72,21 +81,8 @@ comment was about).
 
 ### Merge conflicts or a stale branch
 
-**Dependabot PRs**: don't resolve conflicts by hand. First check `dependabot.status`: if it's
-`rebasing`, Dependabot is already on it (it puts a "Dependabot is rebasing this PR" banner in
-the PR body, often on its own with no one asking), so just wait. Otherwise comment
-`@dependabot rebase` once (`gh pr comment <n> --body "@dependabot rebase"`), then wait for
-Dependabot to force-push (usually a minute or two; it reacts with 👀 and then the head SHA
-changes). Dependabot may also close the PR and open a replacement instead of rebasing; see
-step 1.
-
-Don't sit idle while waiting. Diagnose and reproduce the CI failures locally (next section):
-the rebase rarely changes why an upgrade breaks the build. But don't push anything until the
-rebase has landed, because a commit from anyone else makes Dependabot refuse to rebase. Dependabot
-regenerates the lockfile against the current base, which is cleaner than any manual merge of
-`package-lock.json`. If it hasn't moved after ~10 minutes, or replies that it can't rebase
-because someone else pushed to the branch, fall back to `@dependabot recreate` (only if there
-are no fix commits of yours on the branch, since recreate throws them away) or report it.
+**Dependabot PRs**: don't resolve conflicts by hand; ask the bot to rebase (see
+[references/dependency-prs.md](references/dependency-prs.md)).
 
 **Everyone else's PRs**: merge the base branch in (`git merge origin/<base>`), resolve, run
 the tests, commit, push. Merge rather than rebase so you never force-push over history someone
@@ -115,6 +111,10 @@ Then decide which kind of failure it is:
 - **Needs a secret or permission the PR can't have** (Dependabot and fork PRs don't get
   normal Actions secrets; deploy steps fail with auth errors): not fixable from the PR. Report
   it; don't edit the workflow to work around it.
+- **Passed without doing its job**: a check can go green because its real step was skipped
+  (an `if:` that didn't match, an action that refuses to run when its own workflow file
+  changed in the PR). If a check that should take minutes passed in seconds, open its log
+  before counting it as green.
 - **Real failure caused by the change**: reproduce it locally with the same command CI ran,
   fix it, confirm the command passes locally, commit with a message that says what broke and
   why the fix is right, push.
@@ -136,23 +136,9 @@ environment the code legitimately expects (stubbing a platform module like
 an env var the app requires) keeps every assertion running, so it's a fix. Say in the commit
 message what you stubbed and why.
 
-**Dependency-update PRs** (Dependabot, Renovate) fail for a different reason than feature PRs:
-some upgrade in the bump is incompatible. Find which package (the error usually names it or
-its ecosystem: "typescript-eslint does not support TS 7.0" points at the `typescript` major
-bump). Then pick the smallest honest fix:
-
-1. A code change that adapts to the new version, when it's small and the new version is what
-   you want (a renamed import, a changed config key, a new required option).
-2. Holding back the one incompatible package while the rest of the group lands: pin it below
-   the breaking major in `package.json` (or equivalent), regenerate the lockfile, commit. Say
-   in the report which package was held back and why, and suggest
-   `@dependabot ignore <pkg> major version` if it should stay held until its ecosystem catches
-   up. Don't post that ignore comment yourself; it changes future updates.
-3. If neither is small (a framework major that needs a migration), stop and report: name the
-   package, the breaking change, and roughly what the migration would involve.
-
-Once you push your own commits to a Dependabot branch, Dependabot stops rebasing it
-automatically. That's fine, but it means future conflicts are yours to resolve; mention it.
+**Dependency-update PRs** fail because one upgrade in the bump is incompatible; finding it
+and choosing between adapting the code and holding the package back is covered in
+[references/dependency-prs.md](references/dependency-prs.md).
 
 ### Unresolved review comments
 
@@ -179,9 +165,11 @@ head SHA rather than polling by hand:
 gh pr checks <n> --repo <r> --watch --interval 30
 ```
 
-Run that in the background so you're notified when it exits. Checks can take a few seconds to
-register after a push; if `gh pr checks` reports nothing yet, the snapshot's `pending` list
-is the authority. Then take a new snapshot and repeat step 3.
+Run that in the background so you're notified when it exits. Checks take a few seconds to
+register after a push, and `--watch` exits at once if none have yet, so confirm the checks
+belong to the new head SHA (the snapshot's `head_sha`) before trusting the result. To wait on
+a single workflow run instead, find it with
+`gh run list --repo <r> --branch <head> --json databaseId,headSha` and match the full SHA. Then take a new snapshot and repeat step 3.
 
 Stop going around when any of these is true:
 
