@@ -6,7 +6,8 @@
 Usage:
     uv run pr_snapshot.py <pr-url | number> [--repo owner/name] [--logs]
 
-Prints JSON with: state, draft, author (and whether it's Dependabot), whether we can push
+Prints JSON with: state, draft, recent comments, what Dependabot is doing (rebasing,
+closed and superseded, with replacement candidates), author (and whether it's Dependabot), whether we can push
 to the head branch, merge state (conflicts / behind / blocked), checks grouped by outcome,
 unresolved review threads, and the latest top-level review verdicts.
 
@@ -137,6 +138,49 @@ def review_threads(repo: str, number: int) -> list[dict]:
     return threads
 
 
+def dependabot_status(repo: str, pr: dict) -> dict:
+    """What Dependabot is doing with this PR, so you don't talk over it.
+
+    Dependabot announces work in the PR body ("Dependabot is rebasing this PR") and
+    closes grouped PRs when the group changes, opening a replacement. Both happen
+    without any comment from us, so they have to be read off the PR itself.
+    """
+    body = pr.get("body") or ""
+    comments = pr.get("comments") or []
+    status = "idle"
+    if "Dependabot is rebasing this PR" in body or "Dependabot is recreating this PR" in body:
+        status = "rebasing"
+    superseded = any(
+        "updatable in another way" in (c.get("body") or "")
+        or "superseded by" in (c.get("body") or "")
+        for c in comments
+    )
+    if pr["state"] != "OPEN":
+        status = "closed-superseded" if superseded else "closed"
+    out: dict = {"status": status}
+    if status.startswith("closed"):
+        # Candidate replacements: open Dependabot PRs from the same ecosystem/directory prefix.
+        prefix = pr["headRefName"].rsplit("/", 1)[0]
+        open_prs = json.loads(
+            gh(
+                "pr",
+                "list",
+                "--repo",
+                repo,
+                "--author",
+                "app/dependabot",
+                "--state",
+                "open",
+                "--json",
+                "number,title,headRefName,url",
+                check=False,
+            )
+            or "[]"
+        )
+        out["replacement_candidates"] = [p for p in open_prs if p["headRefName"].startswith(prefix)]
+    return out
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("target")
@@ -148,7 +192,7 @@ def main() -> None:
     fields = (
         "number,title,url,state,isDraft,author,baseRefName,headRefName,headRefOid,"
         "isCrossRepository,maintainerCanModify,mergeable,mergeStateStatus,"
-        "reviewDecision,statusCheckRollup,latestReviews"
+        "reviewDecision,statusCheckRollup,latestReviews,body,comments"
     )
     pr = json.loads(gh("pr", "view", str(number), "--repo", repo, "--json", fields))
 
@@ -190,7 +234,17 @@ def main() -> None:
         "checks": {k: v for k, v in checks.items() if k != "passed"}
         | {"passed_count": len(checks["passed"])},
         "unresolved_threads": review_threads(repo, number),
+        "recent_comments": [
+            {
+                "author": (c.get("author") or {}).get("login"),
+                "at": c.get("createdAt"),
+                "body": (c.get("body") or "")[:300],
+            }
+            for c in (pr.get("comments") or [])[-5:]
+        ],
     }
+    if snapshot["is_dependabot"]:
+        snapshot["dependabot"] = dependabot_status(repo, pr)
     print(json.dumps(snapshot, indent=2))
 
 

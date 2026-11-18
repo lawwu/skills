@@ -24,11 +24,22 @@ uv run <skill-dir>/scripts/pr_snapshot.py <pr-url-or-number> --logs
 It returns JSON with the merge state (`CONFLICTING`/`DIRTY`, `BEHIND`, `BLOCKED`, `CLEAN`),
 failed and pending checks (with an `error_excerpt` of the log around the first `##[error]` for
 each failed Actions job), unresolved review threads, whether the author is Dependabot, and
-whether you can push to the head branch. Take a fresh snapshot at the start of every round;
-the PR changes under you (CI finishes, Dependabot force-pushes, reviewers comment).
+whether you can push to the head branch, the last few comments, and for Dependabot PRs a
+`dependabot.status` (`idle`, `rebasing`, `closed-superseded`, `closed`).
 
-If the PR is closed or merged, say so and stop. If it's a draft, babysit it anyway but say so
-in the report. If `can_push_to_head` is false (a fork that doesn't allow maintainer edits), you
+The PR changes under you: CI finishes, Dependabot rebases or closes it, reviewers comment.
+So take a fresh snapshot at the start of every round, and check `state` and the latest
+comments again **right before anything that writes to GitHub** (a comment, a push, a rerun).
+A comment posted to a PR that closed three minutes ago is noise in the user's notifications.
+
+If the PR was merged, say so and stop. If it was closed by a person, say so and stop. If
+Dependabot closed it as superseded ("updatable in another way"), the work moved to a new PR:
+the snapshot lists `replacement_candidates`. Report the replacement and carry on with it if the
+user's request was about the update rather than the number ("get the npm bump green"); if
+they named this exact PR, ask before writing to the new one. Anything you've already diagnosed
+or fixed locally usually applies to the replacement unchanged, so don't throw it away.
+
+If it's a draft, babysit it anyway but say so in the report. If `can_push_to_head` is false (a fork that doesn't allow maintainer edits), you
 can still diagnose, but report fixes as suggestions instead of pushing them.
 
 ## 2. Get a working copy
@@ -36,15 +47,22 @@ can still diagnose, but report fixes as suggestions instead of pushing them.
 Fixes need the code. Prefer a separate git worktree so the user's own checkout stays
 untouched:
 
-- If you're already inside a clone of the PR's repo: `git fetch origin <head>` and
-  `git worktree add <scratch>/pr-<n> origin/<head>`, then work on a local branch tracking it
-  (`git switch -c <head> --track origin/<head>` inside the worktree).
+- If a clone of the PR's repo exists locally (even with uncommitted work in it; a worktree
+  doesn't touch that):
+  ```bash
+  git fetch origin "+refs/heads/<head>:refs/remotes/origin/<head>"
+  git worktree add -b babysit/pr-<n> <scratch>/pr-<n> origin/<head>
+  ```
+  The `babysit/pr-<n>` local name avoids colliding with a branch the user may already have.
+  Push with `git push origin HEAD:<head>`.
 - Otherwise clone into the scratchpad and `gh pr checkout <n>` there.
 
 Commit with whatever git identity the repo is already configured with. Install dependencies
 the way CI does (read the workflow file: `npm ci` vs `npm install`, which Node/Python version,
 which working directory), because reproducing a CI failure with a different setup reproduces a
-different failure.
+different failure. If the CI runtime version isn't installed, try running it without
+installing (`npx -y node@22 ...`, `uvx --python 3.12 ...`); if that doesn't work, use what's
+there and note the mismatch in the report.
 
 ## 3. Work the blockers, in this order
 
@@ -54,9 +72,17 @@ comment was about).
 
 ### Merge conflicts or a stale branch
 
-**Dependabot PRs**: don't resolve conflicts by hand. Comment `@dependabot rebase` once
-(`gh pr comment <n> --body "@dependabot rebase"`), then wait for Dependabot to force-push (it
-usually takes a minute or two; it reacts with 👀 and then the head SHA changes). Dependabot
+**Dependabot PRs**: don't resolve conflicts by hand. First check `dependabot.status`: if it's
+`rebasing`, Dependabot is already on it (it puts a "Dependabot is rebasing this PR" banner in
+the PR body, often on its own with no one asking), so just wait. Otherwise comment
+`@dependabot rebase` once (`gh pr comment <n> --body "@dependabot rebase"`), then wait for
+Dependabot to force-push (usually a minute or two; it reacts with 👀 and then the head SHA
+changes). Dependabot may also close the PR and open a replacement instead of rebasing; see
+step 1.
+
+Don't sit idle while waiting. Diagnose and reproduce the CI failures locally (next section):
+the rebase rarely changes why an upgrade breaks the build. But don't push anything until the
+rebase has landed, because a commit from anyone else makes Dependabot refuse to rebase. Dependabot
 regenerates the lockfile against the current base, which is cleaner than any manual merge of
 `package-lock.json`. If it hasn't moved after ~10 minutes, or replies that it can't rebase
 because someone else pushed to the branch, fall back to `@dependabot recreate` (only if there
@@ -93,11 +119,22 @@ Then decide which kind of failure it is:
   fix it, confirm the command passes locally, commit with a message that says what broke and
   why the fix is right, push.
 
+A job stops at its first failing step, so the steps after it never ran in CI and may hide a
+second failure. After fixing the first one, run the rest of that job's steps locally too (and
+the same steps for sibling apps in a monorepo that got the same upgrade) before pushing.
+Otherwise each round of CI uncovers one more failure, and five rounds run out fast.
+
 What a fix must not be: skipping or deleting the failing test, adding `continue-on-error`,
 loosening a lint rule or a coverage threshold, `--no-verify`, or editing the workflow so the
 failing step no longer runs. Those make the check green without making the code work, and
 the user would merge a broken PR believing it was fixed. If the only way to green is one of
 those, report it and let the user decide.
+
+The line is whether every assertion still runs against the real code. Giving the tests an
+environment the code legitimately expects (stubbing a platform module like
+`cloudflare:workers` that only exists in production, adding a missing test fixture, setting
+an env var the app requires) keeps every assertion running, so it's a fix. Say in the commit
+message what you stubbed and why.
 
 **Dependency-update PRs** (Dependabot, Renovate) fail for a different reason than feature PRs:
 some upgrade in the bump is incompatible. Find which package (the error usually names it or
