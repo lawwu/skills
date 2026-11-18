@@ -54,12 +54,12 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Install Claude Code v2.1.18
+      - name: Install Claude Code v2.1.327
         run: | # zizmor: ignore[adhoc-packages] exact version pinned below
           # Remove any existing claude installation
           sudo rm -f /usr/local/bin/claude
           # Install specific version via npm (exact version, so no lockfile is needed)
-          npm install -g @anthropic-ai/claude-code@2.1.18
+          npm install -g @anthropic-ai/claude-code@2.1.327
           # Verify the path and version
           CLAUDE_BIN=$(which claude)
           echo "CLAUDE_PATH=$CLAUDE_BIN" >> "$GITHUB_ENV"
@@ -70,7 +70,7 @@ jobs:
       - name: Run Claude Code
         id: claude
         if: steps.auth-check.outputs.allowed == 'true'
-        uses: anthropics/claude-code-action@v1.0.268
+        uses: anthropics/claude-code-action@v1.0.281
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           claude_args: --model claude-opus-5-5
