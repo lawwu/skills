@@ -8,7 +8,7 @@ workflows:
         - 'zizmorcore/zizmor-action@v0.8.1'
     '.github/workflows/claude.yml':
         - 'actions/checkout@v7.0.1'
-        - 'anthropics/claude-code-action@v1.0.268'
+        - 'anthropics/claude-code-action@v1.0.281'
     '.github/workflows/dependabot-auto-merge.yml':
         - 'dependabot/fetch-metadata@v3.1.0'
     '.github/workflows/plugin-release.yml':
@@ -19,7 +19,7 @@ workflows:
         - 'j178/prek-action@v3.1.0'
     '.github/workflows/skill-review.yml':
         - 'actions/checkout@v7.0.1'
-        - 'anthropics/claude-code-action@v1.0.268'
+        - 'anthropics/claude-code-action@v1.0.281'
     '.github/workflows/validate-frontmatter.yml':
         - 'actions/checkout@v7.0.1'
         - 'oven-sh/setup-bun@v2.2.0'
@@ -34,9 +34,9 @@ dependencies:
         commit: 'sha1-6d4fd22b20465ccc0f7354476588e8df7c9ca0e0'
         owner_id: 44036562
         repo_id: 192625525
-    'anthropics/claude-code-action@v1.0.268':
-        ref: 'v1.0.268'
-        commit: 'sha1-c0949c50a78c1ec8ce2647db36629b870e715d0c'
+    'anthropics/claude-code-action@v1.0.281':
+        ref: 'v1.0.281'
+        commit: 'sha1-e5812cd75691ca7bbfc57c0ecf4441db3a1ab7dd'
         owner_id: 76263028
         repo_id: 986421638
         uses:

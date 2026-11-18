@@ -49,12 +49,12 @@ jobs:
             echo "Actor '$ACTOR' is not in CODEOWNERS — skipping."
           fi
 
-      - name: Install Claude Code v2.1.18
+      - name: Install Claude Code v2.1.327
         run: | # zizmor: ignore[adhoc-packages] exact version pinned below
           # Remove any existing claude installation
           sudo rm -f /usr/local/bin/claude
           # Install specific version via npm (exact version, so no lockfile is needed)
-          npm install -g @anthropic-ai/claude-code@2.1.18
+          npm install -g @anthropic-ai/claude-code@2.1.327
           # Verify the path and version
           CLAUDE_BIN=$(which claude)
           echo "CLAUDE_PATH=$CLAUDE_BIN" >> "$GITHUB_ENV"
@@ -65,7 +65,7 @@ jobs:
       - name: Run Claude Code
         if: steps.auth-check.outputs.allowed == 'true'
         id: claude
-        uses: anthropics/claude-code-action@v1.0.268
+        uses: anthropics/claude-code-action@v1.0.281
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           path_to_claude_code_executable: ${{ env.CLAUDE_PATH }}
