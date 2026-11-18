@@ -37,6 +37,7 @@ npx skills add lawwu/skills
 | [babysit-pr](plugins/lawwu-skills/skills/babysit-pr/SKILL.md) | Shepherd a GitHub pull request to green: resolve conflicts (asking Dependabot to rebase its own PRs), fix failing CI, address review comments, wait for checks, and repeat until it is ready to merge. |
 | [costco-price-adjustment](plugins/lawwu-skills/skills/costco-price-adjustment/SKILL.md) | Find Costco purchases whose price has dropped within 30 days, submit the Costco.com price adjustment form for each, and track the credits. |
 | [create-skills-marketplace](plugins/lawwu-skills/skills/create-skills-marketplace/SKILL.md) | Scaffold a new Claude Code skills marketplace from the [cookiecutter template](https://github.com/lawwu/skills-marketplace). |
+| [find-past-work](plugins/lawwu-skills/skills/find-past-work/SKILL.md) | Find work from an earlier Claude Code session and report where it lives now (session, folder, branch, PR or file) and whether it was merged, by searching local transcripts and checking git and GitHub. |
 | [lock-github-actions](plugins/lawwu-skills/skills/lock-github-actions/SKILL.md) | Lock a repo's GitHub Actions to exact commits with [gh-actions-lock](https://github.com/github/gh-actions-lock), lint the workflows with [zizmor](https://docs.zizmor.sh) and fix its findings, check both in CI, and make the checks required. |
 | [skill-creator](plugins/lawwu-skills/skills/code-simplifier/SKILL.md) | Create new skills, modify and improve existing skills, and measure skill performance |
 
