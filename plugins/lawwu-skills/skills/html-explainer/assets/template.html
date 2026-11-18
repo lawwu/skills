@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EXPLAINER TITLE</title>
+<!--
+  Starting point for an HTML explainer. Copy this file, keep the tokens and whichever
+  helpers you use (Fig, Seq, data-explain), and replace everything inside <main>. It has no
+  external dependencies and works when opened straight from disk. The demo below is about
+  one arbitrary topic and its numbers are placeholders: none of it may survive into a real
+  page. Delete this comment, the demo, and any helper you end up not using.
+-->
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #fbfaf7; --panel: #f2f0ea; --ink: #1d1c1a; --muted: #6a665e; --rule: #dcd8cf;
+    --c1: #2b6cb0; --c2: #c9701c; --c3: #2f8f6b; --c4: #a8417a; --c5: #6b5fc7; --c0: #8a857b;
+    --good: #2f8f6b; --bad: #c0452f; --warn: #b7791f;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --serif: Charter, "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --measure: 46rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #151514; --panel: #1f1e1c; --ink: #ebe8e1; --muted: #a09b90; --rule: #34322e;
+      --c1: #6aa9e9; --c2: #eb9a4b; --c3: #5cc49b; --c4: #e07fb2; --c5: #a39af0; --c0: #8f8a80;
+      --good: #5cc49b; --bad: #ee7a63; --warn: #e0b04f;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.6 var(--serif); }
+  main { max-width: var(--measure); margin: 0 auto; padding: 2.5rem 1.25rem 5rem; }
+  h1, h2, h3, .kicker, figcaption, nav, table, .tldr, .chip, summary { font-family: var(--sans); }
+  h1 { font-size: clamp(1.9rem, 4.5vw, 2.7rem); line-height: 1.12; margin: .2rem 0 .6rem; letter-spacing: -.01em; }
+  h2 { font-size: 1.45rem; line-height: 1.25; margin: 3.2rem 0 .6rem; padding-top: 1.1rem; border-top: 1px solid var(--rule); }
+  h3 { font-size: 1.05rem; margin: 1.8rem 0 .3rem; }
+  p { margin: .7rem 0; }
+  a { color: var(--c1); text-underline-offset: 2px; }
+  code, pre { font-family: var(--mono); font-size: .86em; }
+  code { background: var(--panel); padding: .08em .32em; border-radius: 4px; }
+  pre { background: var(--panel); padding: .9rem 1rem; border-radius: 8px; overflow-x: auto; line-height: 1.45; }
+  pre code { background: none; padding: 0; }
+  .kicker { color: var(--muted); font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; }
+  .lede { font-size: 1.18rem; color: var(--ink); }
+  .muted { color: var(--muted); }
+
+  /* The answer first: what a reader with one minute should leave with. */
+  .tldr { background: var(--panel); border-left: 4px solid var(--c1); border-radius: 0 8px 8px 0; padding: .9rem 1.1rem; margin: 1.4rem 0; font-size: .97rem; }
+  .tldr ul { margin: .3rem 0 0; padding-left: 1.1rem; }
+  .tldr li { margin: .25rem 0; }
+
+  nav.toc { font-size: .9rem; margin: 1.2rem 0; display: flex; flex-wrap: wrap; gap: .3rem 1rem; }
+  nav.toc a { color: var(--muted); text-decoration: none; }
+  nav.toc a:hover { color: var(--c1); }
+
+  /* Figures lead each section and may run wider than the text column. */
+  figure { margin: 1.4rem 0; }
+  figure.wide { width: min(100vw - 2rem, 62rem); margin-left: 50%; transform: translateX(-50%); }
+  figure svg { display: block; width: 100%; height: auto; overflow: visible; }
+  figcaption { color: var(--muted); font-size: .86rem; line-height: 1.45; margin-top: .5rem; }
+  figcaption b { color: var(--ink); }
+  .fig-title { font-family: var(--sans); font-weight: 650; font-size: 1rem; margin-bottom: .15rem; }
+  .fig-sub { font-family: var(--sans); color: var(--muted); font-size: .86rem; margin-bottom: .5rem; }
+
+  .fig-axis text, .fig-label { font: 12px var(--sans); fill: var(--muted); }
+  .fig-axis line, .fig-axis path { stroke: var(--rule); }
+  .fig-grid line { stroke: var(--rule); stroke-dasharray: 2 4; }
+  .fig-note { font: 600 12px var(--sans); fill: var(--ink); }
+  .fig-mark { cursor: default; }
+  .fig-mark:focus { outline: none; stroke: var(--ink); stroke-width: 2; }
+  #fig-tip { position: fixed; z-index: 10; pointer-events: none; background: var(--ink); color: var(--bg); font: 12.5px/1.4 var(--sans); padding: .4rem .6rem; border-radius: 6px; max-width: 18rem; opacity: 0; transition: opacity .1s; white-space: pre-line; }
+
+  details { margin: .6rem 0; }
+  summary { cursor: pointer; color: var(--muted); font-size: .88rem; }
+  details[open] summary { margin-bottom: .5rem; }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; font-size: .88rem; width: 100%; }
+  th, td { text-align: left; padding: .38rem .7rem .38rem 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; white-space: nowrap; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* Evidence labels: say what kind of claim a number is. */
+  .chip { display: inline-block; font-size: .7rem; font-weight: 650; letter-spacing: .03em; padding: .05rem .42rem; border-radius: 99px; border: 1px solid currentColor; vertical-align: .08em; white-space: nowrap; }
+  .chip.measured { color: var(--good); } .chip.reported { color: var(--c1); }
+  .chip.computed { color: var(--c5); } .chip.estimate { color: var(--warn); } .chip.inference { color: var(--c4); }
+
+  /* Diagram vocabulary for hand-drawn SVG: give different kinds of thing different shapes. */
+  .d-node { fill: var(--panel); stroke: var(--ink); stroke-width: 1.2; }
+  .d-store { fill: var(--bg); stroke: var(--ink); stroke-width: 1.2; stroke-dasharray: 5 3; }
+  .d-hot { fill: color-mix(in srgb, var(--c2) 22%, var(--bg)); stroke: var(--c2); stroke-width: 1.6; }
+  .d-frozen { fill: color-mix(in srgb, var(--c1) 14%, var(--bg)); stroke: var(--c1); stroke-width: 1.2; }
+  .d-edge { fill: none; stroke: var(--muted); stroke-width: 1.4; }
+  .d-text { font: 13px var(--sans); fill: var(--ink); }
+  .d-small { font: 11.5px var(--mono); fill: var(--muted); }
+
+  /* Sequence diagrams: click a message or use the buttons to walk through it. */
+  .seq-actor { fill: var(--panel); stroke: var(--ink); stroke-width: 1.2; }
+  .seq-life { stroke: var(--rule); stroke-width: 1.5; stroke-dasharray: 3 4; }
+  .seq-step { cursor: pointer; }
+  .seq-step .seq-hit { fill: transparent; }
+  .seq-step:hover .seq-hit { fill: color-mix(in srgb, var(--c1) 7%, transparent); }
+  .seq-step line, .seq-step path { stroke: var(--muted); stroke-width: 1.5; fill: none; }
+  .seq-step .seq-head { fill: var(--muted); } .seq-step.is-on .seq-head { fill: var(--ink); }
+  .seq-step text { font: 13px var(--sans); fill: var(--ink); }
+  .seq-step .seq-n { font: 600 11px var(--sans); fill: var(--muted); }
+  .seq-step.is-later { opacity: .22; }
+  .seq-step.is-on .seq-hit { fill: color-mix(in srgb, var(--ink) 9%, transparent); }
+  .seq-step.is-on line, .seq-step.is-on path { stroke: var(--ink); stroke-width: 2.4; }
+  .seq-step.is-on text { font-weight: 650; }
+  .seq-step:focus { outline: none; } .seq-step:focus-visible .seq-hit { stroke: var(--ink); stroke-width: 2; }
+  .seq-panel { font-family: var(--sans); font-size: .93rem; background: var(--panel); border-radius: 8px; padding: .75rem 1rem; margin-top: .5rem; min-height: 4.6rem; }
+  .seq-panel b { display: block; margin-bottom: .15rem; }
+  .seq-bar { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; margin-top: .5rem; font: .85rem var(--sans); color: var(--muted); }
+
+  /* Click-to-explore: any element with data-explain shows its text in the panel named by data-panel. */
+  [data-explain] { cursor: pointer; }
+  svg [data-explain]:hover, svg [data-explain].is-on { filter: brightness(.93) saturate(1.3); }
+  /* Selection is drawn in ink, never in a data colour, so it can't be read as a category. */
+  [data-explain].is-on { outline: 2px solid var(--ink); outline-offset: 2px; }
+  svg [data-explain].is-on, svg g[data-explain].is-on > :is(rect, circle, ellipse, path, polygon) { outline: none; stroke: var(--ink); stroke-width: 2.8; }
+
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem 1.5rem; }
+  .control { font-family: var(--sans); font-size: .9rem; display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .8rem; margin: .6rem 0; }
+  .control input[type=range] { flex: 1 1 12rem; accent-color: var(--c1); }
+  .control output { font-variant-numeric: tabular-nums; font-weight: 650; min-width: 4.5ch; }
+  button { font: inherit; font-family: var(--sans); font-size: .88rem; padding: .3rem .7rem; border: 1px solid var(--rule); background: var(--panel); color: var(--ink); border-radius: 6px; cursor: pointer; }
+  button[aria-pressed=true] { border-color: var(--c1); color: var(--c1); }
+  :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  footer { margin-top: 3.5rem; padding-top: 1rem; border-top: 1px solid var(--rule); font: .84rem/1.5 var(--sans); color: var(--muted); }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  @media print { figure.wide { width: 100%; margin-left: 0; transform: none; } #fig-tip { display: none; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="kicker">Explainer · DATE</div>
+  <h1>The question this page answers</h1>
+  <p class="lede">The answer in one sentence, stated as plainly as it can be.</p>
+
+  <div class="tldr">
+    <b>Bottom line</b>
+    <ul>
+      <li>The claim that matters most, with its number. <span class="chip measured">measured</span></li>
+      <li>The mechanism in a clause.</li>
+      <li>The main caveat, or what would change the conclusion.</li>
+    </ul>
+  </div>
+
+  <nav class="toc" aria-label="Sections">
+    <a href="#picture">The whole picture</a><a href="#s1">First idea</a><a href="#flow">In order</a><a href="#example">Worked example</a><a href="#caveats">What's uncertain</a><a href="#sources">Sources</a>
+  </nav>
+
+  <h2 id="picture">The whole picture</h2>
+  <figure class="wide">
+    <div class="fig-title">What is trained and what stays fixed</div>
+    <svg viewBox="0 0 860 190" role="img" aria-label="Input flows through a frozen block and a small trained block whose outputs are added">
+      <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="var(--muted)"/></marker></defs>
+      <rect class="d-node" x="10" y="70" width="120" height="50" rx="6"/><text class="d-text" x="70" y="92" text-anchor="middle">input x</text><text class="d-small" x="70" y="109" text-anchor="middle">[batch, d]</text>
+      <rect class="d-frozen" x="250" y="20" width="230" height="56" rx="6" tabindex="0" data-panel="#pic-panel" data-explain="<b>Pretrained weights</b>Loaded once and never updated. For d = 4096 that is 16.8M numbers per layer that need no gradient and no optimizer state."/><text class="d-text" x="365" y="44" text-anchor="middle">pretrained weights (frozen)</text><text class="d-small" x="365" y="62" text-anchor="middle">W: d × d</text>
+      <rect class="d-hot" x="250" y="114" width="230" height="56" rx="6" tabindex="0" data-panel="#pic-panel" data-explain="<b>Added block</b>Two thin matrices. With r = 8 and d = 4096 that is 65,536 trained numbers, about 0.4% of the layer."/><text class="d-text" x="365" y="138" text-anchor="middle">small added block (trained)</text><text class="d-small" x="365" y="156" text-anchor="middle">B·A: d × r, r × d</text>
+      <circle class="d-node" cx="610" cy="95" r="20"/><text class="d-text" x="610" y="100" text-anchor="middle">+</text>
+      <rect class="d-node" x="720" y="70" width="130" height="50" rx="6"/><text class="d-text" x="785" y="100" text-anchor="middle">output h</text>
+      <path class="d-edge" marker-end="url(#arr)" d="M130 85 C190 85 190 48 250 48"/><path class="d-edge" marker-end="url(#arr)" d="M130 105 C190 105 190 142 250 142"/>
+      <path class="d-edge" marker-end="url(#arr)" d="M480 48 C545 48 545 82 592 88"/><path class="d-edge" marker-end="url(#arr)" d="M480 142 C545 142 545 108 592 102"/><path class="d-edge" marker-end="url(#arr)" d="M630 95 H720"/>
+    </svg>
+    <div class="seq-panel" id="pic-panel" aria-live="polite"><span class="muted">Click a coloured block to see what it holds.</span></div>
+    <figcaption><b>Read it as:</b> one sentence telling the reader what to notice. Shapes carry meaning here: blue is fixed, orange is what learning changes.</figcaption>
+  </figure>
+
+  <h2 id="s1">A heading that states the finding, not the topic</h2>
+  <figure>
+    <div class="fig-title">Chart title that says what the chart shows</div>
+    <div class="fig-sub">Unit, time range and source in one line</div>
+    <div class="control">
+      <label for="tau">Decay constant τ</label>
+      <input id="tau" type="range" min="200" max="900" step="20" value="480">
+      <output id="tau-out" for="tau">480</output>
+      <button type="button" id="tau-reset">Reset</button>
+    </div>
+    <div id="demo"></div>
+    <figcaption><b>Read it as:</b> the takeaway. Hover or tab to a point for exact values; the full table is below the chart.</figcaption>
+  </figure>
+  <p>Two or three sentences that add what the figure cannot show: why it happens, what was held fixed, what surprised you.</p>
+  <details><summary>The detail (math, code or derivation)</summary>
+    <pre><code>h = x @ W.T + (alpha / r) * x @ A.T @ B.T   # shapes: [n,d] = [n,d] + [n,d]</code></pre>
+  </details>
+
+  <h2 id="flow">What happens, in order</h2>
+  <figure>
+    <div class="fig-title">One training step</div>
+    <div class="fig-sub">Click any message, or step through with the buttons or arrow keys</div>
+    <div id="seq-demo"></div>
+    <figcaption><b>Read it as:</b> only the small block receives an update; the pretrained weights are read but never written.</figcaption>
+  </figure>
+
+  <h2 id="example">Worked example with real numbers</h2>
+  <p>Push one small, concrete case through the whole mechanism so every quantity has a value.</p>
+
+  <h2 id="caveats">What's uncertain</h2>
+  <p>What was not measured, what the source only asserts, and the check you would run first.</p>
+
+  <h2 id="sources">Sources</h2>
+  <ol><li><a href="#">Title</a>, author, date. What it was used for.</li></ol>
+
+  <footer>Made DATE. Numbers marked <span class="chip estimate">estimate</span> are mine, not the source's.</footer>
+</main>
+
+<div id="fig-tip" role="status"></div>
+<script>
+/* Fig: a small SVG chart helper. Layers share one pair of scales.
+   const f = Fig('#el', {height: 320, x: {label, type: 'linear'|'log'|'band', domain, format}, y: {...}});
+   f.line(rows, {x: 'step', y: 'loss', color: 'var(--c1)', label: 'train', labelDy: 0, dash: '4 3', width: 2})
+   f.dots(rows, {x, y, color, r, tip: d => `text`})        // hover + keyboard focus
+   f.bars(rows, {x: 'name', y: 'value', color, tip, value: true})  // x.type must be 'band'; value prints each bar's number
+   f.band(rows, {x, y0, y1, color})                        // shaded interval along a line
+   f.err(rows, {x, y0, y1, color})                         // error bar per point; pair with dots
+   f.span({x0: 2020, x1: 2023, label: 'era', color})       // shaded stretch of the x axis
+   f.rule({y: 0.5, label: 'baseline'})  f.rule({x: 100})   // reference line
+   f.note(x, y, 'text', {dx, dy, anchor})                  // annotation in data coordinates
+   f.table(rows, [['step','Step'], ['loss','Loss', v => v.toFixed(3)]])  // data table under the chart
+   f.render()                                              // call once, or again after f.clear()
+   Other options: label (the chart's aria-label; always set it), width, margin {top,right,bottom,left}.
+   Dates: there is no time axis. Pass years or timestamps as numbers and give x.format.
+   Hover values exist on dots and bars only; add a dots layer over a line where values matter.
+   Notes: a 'band' x axis also takes line, dots, band and note layers (use it for a few discrete
+   values such as rank 1, 2, 4, 8). Log axes tick at 1-2-5 when they span two decades or fewer.
+   Points with a missing or non-finite value are skipped. If two line labels would land on the
+   same spot, nudge one with labelDy.
+   Live update from a control: build the chart in a function that calls
+   f.clear() -> add every layer and table again -> f.render(), and call it on 'input'.
+   Colours are CSS custom properties, so charts follow the light and dark themes.
+   Also in this file: Seq() for step-through sequence diagrams, and data-explain for
+   click-to-explore on any element. */
+function Fig(sel, opt = {}) {
+  const host = typeof sel === 'string' ? document.querySelector(sel) : sel;
+  const W = opt.width || 720, H = opt.height || 320;
+  const m = Object.assign({top: 30, right: 86, bottom: 44, left: 56}, opt.margin);
+  const X = Object.assign({type: 'linear'}, opt.x), Y = Object.assign({type: 'linear'}, opt.y);
+  const NS = 'http://www.w3.org/2000/svg';
+  let layers = [], tables = [];
+  const el = (tag, attrs = {}, parent) => {
+    const n = document.createElementNS(NS, tag);
+    for (const k in attrs) k === 'style' ? (n.style.cssText = attrs[k]) : k === 'text' ? (n.textContent = attrs[k]) : n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  };
+  const fmt = (v, ax) => ax.format ? ax.format(v) : typeof v !== 'number' ? String(v)
+    : v !== 0 && Math.abs(v) < 1e-3 ? v.toExponential(1)
+    : Math.abs(v) >= 1e4 ? new Intl.NumberFormat('en', {notation: 'compact', maximumSignificantDigits: 3}).format(v)
+    : String(+v.toPrecision(4));
+  function niceTicks(lo, hi, n = 5) {
+    if (lo === hi) { lo -= 1; hi += 1; }
+    const raw = (hi - lo) / n, p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p;
+    const step = (f >= 5 ? 10 : f >= 2 ? 5 : f >= 1 ? 2 : 1) * p, out = [];
+    for (let v = Math.ceil(lo / step) * step; v <= hi + step * 1e-9; v += step) out.push(+v.toPrecision(12));
+    return out;
+  }
+  function scale(ax, values, r0, r1) {
+    if (ax.type === 'band') {
+      const dom = ax.domain || [...new Set(values)], bw = (r1 - r0) / Math.max(dom.length, 1);
+      const s = v => r0 + dom.indexOf(v) * bw + bw / 2;
+      s.ticks = dom; s.bw = bw * 0.72; return s;
+    }
+    const nums = values.filter(v => Number.isFinite(v) && (ax.type !== 'log' || v > 0));
+    let [lo, hi] = ax.domain || [Math.min(...nums), Math.max(...nums)];
+    if (!Number.isFinite(lo) || !Number.isFinite(hi)) { lo = 0; hi = 1; }
+    if (ax.type === 'log') {
+      const a = Math.floor(Math.log10(lo)); let b = Math.ceil(Math.log10(hi)); if (!(b > a)) b = a + 1;
+      const s = v => r0 + (Math.log10(Math.max(v, 10 ** a)) - a) / ((b - a) || 1) * (r1 - r0);
+      s.ticks = Array.from({length: b - a + 1}, (_, i) => 10 ** (a + i));
+      if (b - a <= 2) s.ticks = s.ticks.flatMap(t => [t, 2 * t, 5 * t]).filter(t => t <= 10 ** b);   // 1-2-5 when the span is short
+      return s;
+    }
+    if (!ax.domain) { if (ax.zero !== false && lo > 0 && ax === Y) lo = 0; const t = niceTicks(lo, hi); lo = Math.min(lo, t[0]); hi = Math.max(hi, t[t.length - 1]); }
+    const s = v => r0 + (v - lo) / ((hi - lo) || 1) * (r1 - r0);
+    s.ticks = niceTicks(lo, hi); return s;
+  }
+  const tipEl = () => document.getElementById('fig-tip') || Object.assign(document.body.appendChild(document.createElement('div')), {id: 'fig-tip'});
+  function tippable(node, text) {
+    if (!text) return;
+    node.setAttribute('tabindex', '0'); node.setAttribute('class', 'fig-mark'); node.setAttribute('aria-label', text);
+    const show = e => { const t = tipEl(), b = node.getBoundingClientRect(); t.textContent = text; t.style.opacity = 1;
+      const x = e.clientX ?? b.left + b.width / 2, y = e.clientY ?? b.top;
+      t.style.left = Math.min(x + 12, innerWidth - t.offsetWidth - 8) + 'px'; t.style.top = Math.max(y - t.offsetHeight - 10, 4) + 'px'; };
+    const hide = () => { tipEl().style.opacity = 0; };
+    node.addEventListener('pointermove', show); node.addEventListener('pointerleave', hide);
+    node.addEventListener('focus', show); node.addEventListener('blur', hide);
+  }
+  const api = {
+    line: (rows, o = {}) => (layers.push({kind: 'line', rows, o}), api),
+    dots: (rows, o = {}) => (layers.push({kind: 'dots', rows, o}), api),
+    bars: (rows, o = {}) => (layers.push({kind: 'bars', rows, o}), api),
+    band: (rows, o = {}) => (layers.push({kind: 'band', rows, o}), api),
+    err: (rows, o = {}) => (layers.push({kind: 'err', rows, o}), api),
+    span: (o = {}) => (layers.push({kind: 'span', rows: [], o}), api),
+    rule: (o = {}) => (layers.push({kind: 'rule', rows: [], o}), api),
+    note: (x, y, text, o = {}) => (layers.push({kind: 'note', rows: [], o: Object.assign({x, y, text}, o)}), api),
+    table: (rows, cols, summary = 'Data behind this chart') => (tables.push({rows, cols, summary}), api),
+    clear: () => (layers = [], tables = [], api),
+    render() {
+      host.innerHTML = '';
+      const xs = [], ys = [];
+      for (const {kind, rows, o} of layers) {
+        if (kind === 'rule') { if (o.x != null) xs.push(o.x); if (o.y != null) ys.push(o.y); continue; }
+        if (kind === 'span') { xs.push(o.x0, o.x1); continue; }
+        if (kind === 'note') continue;
+        for (const d of rows) { xs.push(d[o.x || 'x']); if (kind === 'band' || kind === 'err') ys.push(d[o.y0 || 'y0'], d[o.y1 || 'y1']); else ys.push(d[o.y || 'y']); }
+      }
+      const sx = scale(X, xs, m.left, W - m.right), sy = scale(Y, ys, H - m.bottom, m.top);
+      const svg = el('svg', {viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': opt.label || 'Chart'}, host);
+      const grid = el('g', {class: 'fig-grid'}, svg), axis = el('g', {class: 'fig-axis'}, svg);
+      for (const t of sy.ticks) {
+        el('line', {x1: m.left, x2: W - m.right, y1: sy(t), y2: sy(t)}, grid);
+        el('text', {x: m.left - 8, y: sy(t) + 4, 'text-anchor': 'end', text: fmt(t, Y)}, axis);
+      }
+      el('line', {x1: m.left, x2: W - m.right, y1: H - m.bottom, y2: H - m.bottom}, axis);
+      const every = X.type === 'band' ? Math.ceil(sx.ticks.length / 12) : 1;
+      sx.ticks.forEach((t, i) => { if (i % every) return;
+        if (X.type !== 'band') el('line', {x1: sx(t), x2: sx(t), y1: H - m.bottom, y2: H - m.bottom + 5}, axis);
+        el('text', {x: sx(t), y: H - m.bottom + 19, 'text-anchor': 'middle', text: fmt(t, X)}, axis); });
+      if (X.label) el('text', {x: (m.left + W - m.right) / 2, y: H - 6, 'text-anchor': 'middle', text: X.label + (X.type === 'log' ? ' (log scale)' : '')}, axis);
+      if (Y.label) el('text', {x: m.left - 44, y: 12, 'text-anchor': 'start', text: Y.label + (Y.type === 'log' ? ' (log scale)' : '')}, axis);
+      const plot = el('g', {}, svg);
+      layers.forEach(({kind, rows, o}, i) => {
+        const color = o.color || `var(--c${(i % 5) + 1})`, kx = o.x || 'x', ky = o.y || 'y';
+        if (kind === 'band') {
+          const up = rows.map(d => `${sx(d[kx])},${sy(d[o.y1 || 'y1'])}`), dn = rows.map(d => `${sx(d[kx])},${sy(d[o.y0 || 'y0'])}`).reverse();
+          el('polygon', {points: up.concat(dn).join(' '), style: `fill:${color};opacity:${o.opacity ?? .18}`}, plot);
+        } else if (kind === 'line') {
+          const ok = rows.filter(d => Number.isFinite(sy(d[ky])));
+          el('polyline', {points: ok.map(d => `${sx(d[kx])},${sy(d[ky])}`).join(' '), style: `fill:none;stroke:${color};stroke-width:${o.width || 2};stroke-linejoin:round;${o.dash ? `stroke-dasharray:${o.dash}` : ''}`}, plot);
+          const last = ok[ok.length - 1];
+          if (o.label && last) el('text', {class: 'fig-label', x: sx(last[kx]) + 6, y: sy(last[ky]) + 4 + (o.labelDy || 0), style: `fill:${color};font-weight:650`, text: o.label}, plot);
+        } else if (kind === 'dots') {
+          for (const d of rows) { if (!Number.isFinite(sx(d[kx])) || !Number.isFinite(sy(d[ky]))) continue; const c = el('circle', {cx: sx(d[kx]), cy: sy(d[ky]), r: o.r || 4.5, style: `fill:${typeof o.color === 'function' ? o.color(d) : color};stroke:var(--bg);stroke-width:1`}, plot);
+            tippable(c, o.tip ? o.tip(d) : `${fmt(d[kx], X)}: ${fmt(d[ky], Y)}`); }
+        } else if (kind === 'bars') {
+          const base = sy(Y.type === 'log' ? sy.ticks[0] : Math.max(0, Math.min(...sy.ticks)));
+          for (const d of rows) { const y = sy(d[ky]);
+            const r = el('rect', {x: sx(d[kx]) - sx.bw / 2, y: Math.min(y, base), width: sx.bw, height: Math.abs(base - y), rx: 2, style: `fill:${typeof o.color === 'function' ? o.color(d) : color}`}, plot);
+            if (o.value) el('text', {class: 'fig-note', x: sx(d[kx]), y: Math.min(y, base) - 6, 'text-anchor': 'middle', text: typeof o.value === 'function' ? o.value(d) : fmt(d[ky], Y)}, plot);
+            tippable(r, o.tip ? o.tip(d) : `${d[kx]}: ${fmt(d[ky], Y)}`); }
+        } else if (kind === 'err') {
+          for (const d of rows) { const x = sx(d[kx]), a = sy(d[o.y0 || 'y0']), b = sy(d[o.y1 || 'y1']);
+            if (![x, a, b].every(Number.isFinite)) continue;
+            el('path', {d: `M${x} ${a}V${b}M${x - 4} ${a}h8M${x - 4} ${b}h8`, style: `fill:none;stroke:${color};stroke-width:1.5`}, plot); }
+        } else if (kind === 'span') {
+          const a = sx(o.x0), b = sx(o.x1);
+          el('rect', {x: Math.min(a, b), y: m.top, width: Math.abs(b - a), height: H - m.bottom - m.top, style: `fill:${o.color || 'var(--c0)'};opacity:${o.opacity ?? .13}`}, plot);
+          if (o.label) el('text', {class: 'fig-label', x: Math.min(a, b) + 5, y: m.top + 12, text: o.label}, plot);
+        } else if (kind === 'rule') {
+          const st = `stroke:${o.color || 'var(--muted)'};stroke-width:1.2;stroke-dasharray:${o.dash || '5 4'}`;
+          if (o.y != null) { el('line', {x1: m.left, x2: W - m.right, y1: sy(o.y), y2: sy(o.y), style: st}, plot);
+            if (o.label) el('text', {class: 'fig-label', x: W - m.right + 6, y: sy(o.y) + 4, text: o.label}, plot); }
+          if (o.x != null) { el('line', {x1: sx(o.x), x2: sx(o.x), y1: m.top, y2: H - m.bottom, style: st}, plot);
+            if (o.label) el('text', {class: 'fig-label', x: sx(o.x) + 5, y: m.top + 10, text: o.label}, plot); }
+        } else if (kind === 'note') {
+          el('text', {class: 'fig-note', x: sx(o.x) + (o.dx ?? 8), y: sy(o.y) + (o.dy ?? -8), 'text-anchor': o.anchor || 'start', text: o.text}, plot);
+        }
+      });
+      for (const {rows, cols, summary} of tables) {
+        const d = host.appendChild(document.createElement('details'));
+        d.innerHTML = `<summary></summary><div class="scroll"><table><thead><tr>${cols.map(c => `<th${typeof rows[0]?.[c[0]] === 'number' ? ' class="num"' : ''}></th>`).join('')}</tr></thead><tbody></tbody></table></div>`;
+        d.querySelector('summary').textContent = summary; d.querySelectorAll('th').forEach((th, i) => { th.textContent = cols[i][1] || cols[i][0]; });
+        const tb = d.querySelector('tbody');
+        for (const r of rows) { const tr = tb.insertRow();
+          for (const c of cols) { const td = tr.insertCell(), v = r[c[0]]; if (typeof v === 'number') td.className = 'num'; td.textContent = c[2] ? c[2](v, r) : v; } }
+      }
+      return api;
+    }
+  };
+  return api;
+}
+
+/* Seq: a sequence diagram the reader can walk through.
+   Seq('#el', {
+     actors: [{id: 'opt', label: 'Optimizer'}, ...],          // left to right
+     steps: [{from: 'data', to: 'model', label: 'batch of 32', detail: 'HTML shown when selected',
+              kind: 'call' | 'return' | 'self'}, ...],         // top to bottom, in time order
+     reveal: true,   // dim the steps after the selected one, so stepping builds the picture up
+     width: 720, rowH: 44, start: -1   // start: index selected on load, -1 for none
+   })
+   Keep labels short (about 30 characters) and actors to six or fewer; nothing is auto-fitted.
+   label is plain text; detail is HTML.
+   Every step is a button: click, Enter, or the arrow keys select it and show its detail. */
+function Seq(sel, {actors, steps, reveal = true, width = 720, rowH = 44, start = -1} = {}) {
+  const host = typeof sel === 'string' ? document.querySelector(sel) : sel, NS = 'http://www.w3.org/2000/svg';
+  const top = 58, H = top + steps.length * rowH + 16, gap = width / actors.length;
+  const ax = Object.fromEntries(actors.map((a, i) => [a.id, gap * (i + .5)]));
+  const el = (tag, attrs, parent) => { const n = document.createElementNS(NS, tag);
+    for (const k in attrs) k === 'text' ? (n.textContent = attrs[k]) : n.setAttribute(k, attrs[k]); parent.appendChild(n); return n; };
+  host.innerHTML = '';
+  const svg = el('svg', {viewBox: `0 0 ${width} ${H}`, role: 'group', 'aria-label': 'Sequence diagram'}, host);
+  const head = (g, x, y, dir) => el('polygon', {class: 'seq-head', points: `${x},${y} ${x - 9 * dir},${y - 4.5} ${x - 9 * dir},${y + 4.5}`}, g);
+  const esc = t => String(t).replace(/[&<>]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;'}[c]));
+  for (const a of actors) {
+    el('line', {class: 'seq-life', x1: ax[a.id], x2: ax[a.id], y1: 40, y2: H - 6}, svg);
+    el('rect', {class: 'seq-actor', x: ax[a.id] - Math.min(gap * .44, 78), y: 6, width: Math.min(gap * .88, 156), height: 32, rx: 6}, svg);
+    el('text', {class: 'd-text', x: ax[a.id], y: 27, 'text-anchor': 'middle', text: a.label}, svg);
+  }
+  const rows = steps.map((s, i) => {
+    const y = top + i * rowH + rowH / 2, g = el('g', {class: 'seq-step', tabindex: 0, role: 'button', 'aria-label': `Step ${i + 1}: ${s.label}`}, svg);
+    el('rect', {class: 'seq-hit', x: 2, y: y - rowH / 2 + 2, width: width - 4, height: rowH - 4, rx: 6}, g);
+    el('text', {class: 'seq-n', x: 10, y: y + 4, text: i + 1}, g);
+    const x1 = ax[s.from], x2 = ax[s.to ?? s.from];
+    if (s.kind === 'self' || x1 === x2) {
+      const k = x1 > width * .7 ? -1 : 1;   // loop inward when the actor sits at the right edge
+      el('path', {d: `M${x1} ${y - 8} h${34 * k} v16 h${-25 * k}`}, g); head(g, x1 + 3 * k, y + 8, -k);
+      el('text', {x: x1 + 42 * k, y: y + 4, 'text-anchor': k < 0 ? 'end' : 'start', text: s.label}, g);
+    } else {
+      const dir = Math.sign(x2 - x1);
+      el('line', {x1: x1 + dir * 2, x2: x2 - dir * 9, y1: y + 6, y2: y + 6, ...(s.kind === 'return' ? {'stroke-dasharray': '6 4'} : {})}, g); head(g, x2 - dir * 2, y + 6, dir);
+      el('text', {x: (x1 + x2) / 2, y: y - 2, 'text-anchor': 'middle', text: s.label}, g);
+    }
+    return g;
+  });
+  const panel = host.appendChild(Object.assign(document.createElement('div'), {className: 'seq-panel'})); panel.setAttribute('aria-live', 'polite');
+  const bar = host.appendChild(Object.assign(document.createElement('div'), {className: 'seq-bar'}));
+  bar.innerHTML = '<button type="button" data-a="prev">← Back</button><button type="button" data-a="next">Next →</button><button type="button" data-a="all">Show all</button><span></span>';
+  let cur = start;
+  function go(i) {
+    cur = Math.max(-1, Math.min(steps.length - 1, i));
+    rows.forEach((g, j) => { g.classList.toggle('is-on', j === cur); g.classList.toggle('is-later', reveal && cur >= 0 && j > cur); });
+    const s = steps[cur];
+    panel.innerHTML = s ? `<b>${cur + 1}. ${esc(s.label)}</b>${s.detail || ''}` : '<span class="muted">Click a step, or press Next, to walk through it.</span>';
+    bar.lastElementChild.textContent = s ? `Step ${cur + 1} of ${steps.length}` : `${steps.length} steps`;
+  }
+  rows.forEach((g, i) => { g.addEventListener('click', () => go(i));
+    g.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(i); }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); go(cur + 1); rows[cur]?.focus(); }
+      if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { e.preventDefault(); go(cur - 1); rows[Math.max(cur, 0)]?.focus(); } }); });
+  bar.addEventListener('click', e => { const a = e.target.dataset?.a; if (a === 'prev') go(cur - 1); if (a === 'next') go(cur + 1); if (a === 'all') go(-1); });
+  go(cur);
+  return {go};
+}
+
+/* Click-to-explore for hand-drawn diagrams and any other element: add
+   data-explain="<b>Name</b>What it is" (HTML) and data-panel="#panel-id". Each such element is
+   made focusable below, so it works with click, Tab and Enter. */
+document.querySelectorAll('[data-explain]').forEach(n => { if (!n.hasAttribute('tabindex')) n.setAttribute('tabindex', '0'); if (!n.hasAttribute('role')) n.setAttribute('role', 'button'); });
+document.addEventListener('click', e => explain(e.target.closest?.('[data-explain]')));
+document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches?.('[data-explain]')) { e.preventDefault(); explain(e.target); } });
+function explain(node) {
+  if (!node) return;
+  const panel = document.querySelector(node.dataset.panel); if (!panel) return;
+  document.querySelectorAll(`[data-panel="${node.dataset.panel}"]`).forEach(n => n.classList.toggle('is-on', n === node));
+  panel.innerHTML = node.dataset.explain;
+}
+
+/* Demo: replace with the explainer's own figures. */
+Seq('#seq-demo', {
+  actors: [{id: 'data', label: 'Data loader'}, {id: 'base', label: 'Frozen weights'}, {id: 'ad', label: 'Added block'}, {id: 'opt', label: 'Optimizer'}],
+  steps: [
+    {from: 'data', to: 'base', label: 'batch x  [32, 4096]', detail: 'The same batch goes to both paths.'},
+    {from: 'data', to: 'ad', label: 'same batch x', detail: 'The added block sees the input the frozen layer sees.'},
+    {from: 'base', to: 'ad', label: 'x·Wᵀ, added to the block output', detail: 'Forward pass only. No gradient is stored for W.'},
+    {from: 'ad', to: 'opt', label: 'loss and gradients for A, B', detail: 'Gradients exist for 65,536 numbers, not 16.8M.'},
+    {from: 'opt', to: 'ad', label: 'update A, B', kind: 'return', detail: 'The only write in the whole step.'},
+    {from: 'opt', label: 'advance schedule', kind: 'self', detail: 'Learning-rate schedule and step counter move on.'},
+  ],
+});
+
+/* A control that redraws a chart: one function builds every layer from the current value. */
+(() => {
+  const input = document.getElementById('tau'), out = document.getElementById('tau-out'), start = input.value;
+  const f = Fig('#demo', {height: 320, label: 'Training and validation loss by step', x: {label: 'training step'}, y: {label: 'loss', domain: [0, 2.5]}});
+  function draw() {
+    const tau = +input.value; out.textContent = tau;
+    const rows = Array.from({length: 40}, (_, i) => { const step = (i + 1) * 50;
+      return {step, train: 2.2 * Math.exp(-step / (tau * .88)) + 0.31, val: 2.1 * Math.exp(-step / tau) + 0.42 + Math.max(0, step - 1300) * 0.00012}; });
+    const best = rows.reduce((a, b) => (b.val < a.val ? b : a));
+    f.clear()
+      .band(rows.map(d => ({step: d.step, y0: d.val - 0.05, y1: d.val + 0.05})), {x: 'step', color: 'var(--c2)'})
+      .line(rows, {x: 'step', y: 'train', label: 'train', color: 'var(--c1)'})
+      .line(rows, {x: 'step', y: 'val', label: 'validation', color: 'var(--c2)'})
+      .dots([best], {x: 'step', y: 'val', color: 'var(--c2)', tip: d => `Lowest validation loss\nstep ${d.step}: ${d.val.toFixed(3)}`})
+      .rule({x: best.step, label: 'stop here'})
+      .table(rows.filter((_, i) => i % 4 === 3), [['step', 'Step'], ['train', 'Train', v => v.toFixed(3)], ['val', 'Validation', v => v.toFixed(3)]])
+      .render();
+  }
+  input.addEventListener('input', draw);
+  document.getElementById('tau-reset').addEventListener('click', () => { input.value = start; draw(); });
+  draw();
+})();
+</script>
+</body>
+</html>
