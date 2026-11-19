@@ -50,6 +50,14 @@ All changes go through the PR flow, but formal review is optional.
 - **Request review** only when you want a second pair of eyes
 - Keep PRs focused - one skill or one improvement per PR when practical
 
+## Versioning
+
+`plugin.json` deliberately has no `version` field. Without one, Claude Code treats each
+commit on `main` as a new version, so `claude plugin update lawwu-skills@lawwu-skills`
+picks up every merge. A fixed version makes that command report "already at the latest
+version" until the number is bumped. The `plugin-release` workflow only cuts a tag and
+GitHub release when a `version` is present, so it is dormant.
+
 ## GitHub Actions
 
 The workflows' actions are locked to exact commits in `.github/workflows/actions.lock`, and
